@@ -41,6 +41,7 @@ int main()
     long long score = 1;
     vector<vector<bool>> H(W+1, vector<bool>(W));
     vector<vector<bool>> V(W, vector<bool>(W+1));
+    int overflow = 0;
 
     for (int d=0; d<D; d++)
     {
@@ -144,7 +145,11 @@ int main()
         {
             for (int i=0; i<N; i++)
                 if (answer[i].area()<a[d][i])
+                {
                     score += (a[d][i]-answer[i].area())*100;
+                    overflow++;
+                    //cerr<<"!"<<d<<" "<<i<<" "<<a[d][i]<<" "<<answer[i].area()<<endl;
+                }
 
             vector<vector<bool>> H2(W+1, vector<bool>(W));
             vector<vector<bool>> V2(W, vector<bool>(W+1));
@@ -195,6 +200,6 @@ int main()
         system_clock::time_point now = system_clock::now();
         double time = chrono::duration_cast<chrono::nanoseconds>(now-start).count()*1e-9;
 
-        fprintf(stderr, " %2d %2d %6lld %8lld %5.3f\n", D, N, remain, score, time);
+        fprintf(stderr, " %2d %2d %6lld %8lld %2d %5.3f\n", D, N, remain, score, overflow, time);
     }
 }
