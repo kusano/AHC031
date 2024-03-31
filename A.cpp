@@ -52,6 +52,8 @@ int main()
     vector<vector<bool>> V(W, vector<bool>(W+1));
     int overflow = 0;
 
+    vector<vector<Line>> lines(D);
+
     for (int d=0; d<D; d++)
     {
         // サイズ0の予約を追加して偶数にする。
@@ -71,8 +73,6 @@ int main()
                 h++;
             return h;
         };
-
-        vector<Line> lines;
 
         // 余りが少なくなるようにペアを割り当てていく。
         {
@@ -95,7 +95,7 @@ int main()
                         }
 
                     U[i] = U[mj] = true;
-                    lines.push_back(Line(i, mj, get_h(i, mj)));
+                    lines[d].push_back(Line(i, mj, get_h(i, mj)));
                 }
         }
 
@@ -108,54 +108,60 @@ int main()
                 if (r0==r1)
                     continue;
 
+                Line &l0 = lines[d][r0];
+                Line &l1 = lines[d][r1];
+
                 int t0 = xor64()%2;
                 int t1 = xor64()%2;
                 swap(
-                    t0==0 ? lines[r0].a0 : lines[r0].a1,
-                    10==0 ? lines[r1].a0 : lines[r1].a1);
+                    t0==0 ? l0.a0 : l0.a1,
+                    10==0 ? l1.a0 : l1.a1);
 
-                int h02 = get_h(lines[r0].a0, lines[r0].a1);
-                int h12 = get_h(lines[r1].a0, lines[r1].a1);
+                int h02 = get_h(l0.a0, l0.a1);
+                int h12 = get_h(l1.a0, l1.a1);
 
-                if (h02+h12 < lines[r0].h+lines[r1].h)
+                if (h02+h12<l0.h+l1.h)
                 {
-                    lines[r0].h = h02;
-                    lines[r1].h = h12;
+                    l0.h = h02;
+                    l1.h = h12;
                 }
                 else
                     swap(
-                        t0==0 ? lines[r0].a0 : lines[r0].a1,
-                        10==0 ? lines[r1].a0 : lines[r1].a1);
+                        t0==0 ? l0.a0 : l0.a1,
+                        10==0 ? l1.a0 : l1.a1);
             }
 
-            for (Line &line: lines)
+            for (Line &line: lines[d])
                 if (A[line.a0]>A[line.a1])
                     swap(line.a0, line.a1);
         }
 
-        sort(lines.begin(), lines.end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
+        sort(lines[d].begin(), lines[d].end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
 
         // イベントホールの高さを超えるなら、最後からライン減らす。
         {
             int h = 0;
-            for (Line &line: lines)
+            for (Line &line: lines[d])
                 h += line.h;
 
             for (int i=N/2-1; i>=0 && h>W; i--)
             {
-                int d = min(h-W, lines[i].h-1);
-                lines[i].h -= d;
-                h -= d;
+                int dd = min(h-W, lines[d][i].h-1);
+                lines[d][i].h -= dd;
+                h -= dd;
             }
         }
+    }
 
+    for (int d=0; d<D; d++)
+    {
         // 答えに変換。
         vector<Area> answer(N);
         {
             int y = 0;
-            for (Line &line: lines)
+            for (Line &line: lines[d])
             {
-                int w = (A[line.a0]+line.h-1)/line.h;
+                int w = line.a0==N ? 0 : (a[d][line.a0]+line.h-1)/line.h;
                 w = min(w, W-1);
                 if (line.a0<N)
                 {
