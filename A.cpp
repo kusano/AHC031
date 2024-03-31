@@ -19,6 +19,7 @@ struct Line
     int a0 = 0;
     int a1 = 0;
     int h = 0;
+    int x = 0;
 
     Line() {}
     Line(int a0, int a1, int h): a0(a0), a1(a1), h(h) {}
@@ -282,6 +283,52 @@ int main()
         }
     }
 
+    // 壁のx座標を調整
+    {
+        vector<int> PV(W, -1);
+
+        for (int d=0; d<D; d++)
+        {
+            int y = 0;
+            for (Line &line: lines[d])
+            {
+                int xmin = ((line.a0<N?a[d][line.a0]:0)+line.h-1)/line.h;
+                int xmax = W-((line.a1<N?a[d][line.a1]:0)+line.h-1)/line.h;
+                xmax = min(W/2, xmax);
+                if (xmin>xmax)
+                    line.x = xmin;
+                else
+                {
+                    int ms = -1;
+                    int mx = 0;
+                    for (int x=xmin; x<=xmax; x++)
+                    {
+                        int s = 1;
+                        for (int dy=0; dy<line.h; dy++)
+                            if (PV[y+dy]==x)
+                                s++;
+                        s = s*1000 - abs((xmin+xmax)/2-x);
+
+                        if (s>ms)
+                        {
+                            ms = s;
+                            mx = x;
+                        }
+                    }
+                    line.x = mx;
+                }
+
+                line.x = min(W-1, line.x);
+                line.x = max(line.a0<N?1:0, line.x);
+
+                for (int dy=0; dy<line.h; dy++)
+                    PV[y+dy] = line.x;
+
+                y += line.h;
+            }
+        }
+    }
+
     for (int d=0; d<D; d++)
     {
         // 答えに変換。
@@ -290,18 +337,16 @@ int main()
             int y = 0;
             for (Line &line: lines[d])
             {
-                int w = line.a0==N ? 0 : (a[d][line.a0]+line.h-1)/line.h;
-                w = min(w, W-1);
                 if (line.a0<N)
                 {
                     answer[line.a0].x0 = 0;
                     answer[line.a0].y0 = y;
-                    answer[line.a0].x1 = w;
+                    answer[line.a0].x1 = line.x;
                     answer[line.a0].y1 = y+line.h;
                 }
                 if (line.a1<N)
                 {
-                    answer[line.a1].x0 = w;
+                    answer[line.a1].x0 = line.x;
                     answer[line.a1].y0 = y;
                     answer[line.a1].x1 = W;
                     answer[line.a1].y1 = y+line.h;
