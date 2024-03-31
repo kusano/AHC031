@@ -151,6 +151,77 @@ int main()
                 h -= dd;
             }
         }
+
+        sort(lines[d].begin(), lines[d].end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
+    }
+
+    // 高さの余りをなるべく前後と高さが合うように割り振る。
+    {
+        for (int d=0; d<D; d++)
+        {
+            int h = W;
+            for (Line &line: lines[d])
+                h -= line.h;
+
+            vector<bool> F(lines[d].size());
+
+            if (d>0)
+            {
+                vector<pair<int, int>> C;
+                for (int i=0; i<(int)lines[d].size(); i++)
+                    if (!F[i] &&
+                        lines[d-1][i].h>=lines[d][i].h)
+                        C.push_back({lines[d-1][i].h-lines[d][i].h, i});
+                sort(C.begin(), C.end());
+
+                for (auto c: C)
+                    if (c.first<=h)
+                    {
+                        h -= c.first;
+                        lines[d][c.second].h += c.first;
+                        F[c.second] = true;
+                    }
+            }
+
+            if (d<D-1)
+            {
+                vector<pair<int, int>> C;
+                for (int i=0; i<(int)lines[d].size(); i++)
+                    if (!F[i] &&
+                        lines[d+1][i].h>=lines[d][i].h)
+                        C.push_back({lines[d+1][i].h-lines[d][i].h, i});
+                sort(C.begin(), C.end());
+
+                for (auto c: C)
+                    if (c.first<=h)
+                    {
+                        h -= c.first;
+                        lines[d][c.second].h += c.first;
+                        F[c.second] = true;
+                    }
+            }
+
+            int n = 0;
+            for (bool f: F)
+                if (!f)
+                    n++;
+            if (n>0)
+            {
+                while (h>0)
+                    for (int i=0; i<(int)lines[d].size() && h>0; i++)
+                    {
+                        h--;
+                        lines[d][i].h++;
+                    }
+            }
+            else
+            {
+                sort(lines[d].begin(), lines[d].end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
+                lines[d].back().h += h;
+            }
+
+            sort(lines[d].begin(), lines[d].end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
+        }
     }
 
     for (int d=0; d<D; d++)
