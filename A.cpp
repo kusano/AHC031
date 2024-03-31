@@ -224,6 +224,64 @@ int main()
         }
     }
 
+    // 横の壁をなるべく作らないように並び替え。
+    if (N<40)
+    {
+        for (int d=1; d<D; d++)
+        {
+            double tm = chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9;
+            if (tm>2.0)
+                break;
+
+            vector<bool> PH(W+1);
+            int y = 0;
+            for (Line &line: lines[d-1])
+            {
+                PH[y] = true;
+                y += line.h;
+            }
+
+            int n = (int)lines[d].size();
+
+            vector<int> T(1<<n, -1);
+            vector<vector<int>> TO(1<<n);
+            T[0] = 0;
+
+            for (int i=0; i<n; i++)
+            {
+                vector<int> P(1<<n, -1);
+                vector<vector<int>> PO(1<<n);
+                P.swap(T);
+                PO.swap(TO);
+
+                for (int b=0; b<1<<n; b++)
+                    if (P[b]>=0)
+                    {
+                        int y = 0;
+                        for (int o: PO[b])
+                            y += lines[d][o].h;
+
+                        for (int j=0; j<n; j++)
+                            if ((b>>j&1)==0)
+                            {
+                                int t = P[b]+(PH[y+lines[d][j].h]?1:0);
+                                if (t>T[b|1<<j])
+                                {
+                                    T[b|1<<j] = t;
+                                    TO[b|1<<j] = PO[b];
+                                    TO[b|1<<j].push_back(j);
+                                }
+                            }
+                    }
+            }
+
+            vector<Line> temp = lines[d];
+            lines[d].clear();
+            for (int o: TO[(1<<n)-1])
+                lines[d].push_back(temp[o]);
+        }
+    }
+
     for (int d=0; d<D; d++)
     {
         // 答えに変換。
