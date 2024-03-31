@@ -105,7 +105,7 @@ int main()
 
             for (int i=N/2-1; i>=0 && h>W; i--)
             {
-                int d = min(h, lines[i].h-1);
+                int d = min(h-W, lines[i].h-1);
                 lines[i].h -= d;
                 h -= d;
             }
