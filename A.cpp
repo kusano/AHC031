@@ -50,14 +50,14 @@ int main()
         if (N2%2!=0)
         {
             N2++;
-            A.push_back(D);
+            A.push_back(0);
         }
 
         // a0 と a1 をペアにしたときに必要な高さ。
         auto get_h = [&](int a0, int a1)
         {
-            int h = (a[d][a0]+a[d][a1]+W-1)/W;
-            if ((a[d][a0]+h-1)/h+(a[d][a1]+h-1)/h>W)
+            int h = (A[a0]+A[a1]+W-1)/W;
+            if ((A[a0]+h-1)/h+(A[a1]+h-1)/h>W)
                 h++;
             return h;
         };
@@ -76,7 +76,7 @@ int main()
                         if (j!=i && !U[j])
                         {
                             int h = get_h(i, j);
-                            int r = W*h-a[d][i]-a[d][j];
+                            int r = W*h-A[i]-A[j];
                             if (r<mr)
                             {
                                 mr = r;
@@ -87,22 +87,27 @@ int main()
                     U[i] = U[mj] = true;
 
                     Line l(i, mj, get_h(i, mj));
-                    if (a[d][l.a0]>a[d][l.a1])
+                    if (A[l.a0]>A[l.a1])
                         swap(l.a0, l.a1);
 
-                    lines.push_back(Line(i, mj, get_h(i, mj)));
+                    lines.push_back(l);
                 }
         }
 
         sort(lines.begin(), lines.end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
 
-        // イベントホールの高さを超えるなら、最後のライン減らす。
+        // イベントホールの高さを超えるなら、最後からライン減らす。
         {
             int h = 0;
             for (Line &line: lines)
                 h += line.h;
-            if (h>W)
-                lines[N/2-1].h -= h-W;
+
+            for (int i=N/2-1; i>=0 && h>W; i--)
+            {
+                int d = min(h, lines[i].h-1);
+                lines[i].h -= d;
+                h -= d;
+            }
         }
 
         // 答えに変換。
@@ -111,7 +116,8 @@ int main()
             int y = 0;
             for (Line &line: lines)
             {
-                int w = (a[d][line.a0]+line.h-1)/line.h;
+                int w = (A[line.a0]+line.h-1)/line.h;
+                w = min(w, W-1);
                 if (line.a0<N)
                 {
                     answer[line.a0].x0 = 0;
@@ -189,6 +195,6 @@ int main()
         system_clock::time_point now = system_clock::now();
         double time = chrono::duration_cast<chrono::nanoseconds>(now-start).count()*1e-9;
 
-        fprintf(stderr, " %2d %2d %6lld %7lld %5.3f\n", D, N, remain, score, time);
+        fprintf(stderr, " %2d %2d %6lld %8lld %5.3f\n", D, N, remain, score, time);
     }
 }
