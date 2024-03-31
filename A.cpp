@@ -2,8 +2,17 @@
 #include <vector>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 using namespace std;
 using namespace std::chrono;
+
+int xor64() {
+    static uint64_t x = 88172645463345263ULL;
+    x ^= x<<13;
+    x ^= x>> 7;
+    x ^= x<<17;
+    return int(x&0x7fffffff);
+}
 
 struct Line
 {
@@ -86,13 +95,42 @@ int main()
                         }
 
                     U[i] = U[mj] = true;
-
-                    Line l(i, mj, get_h(i, mj));
-                    if (A[l.a0]>A[l.a1])
-                        swap(l.a0, l.a1);
-
-                    lines.push_back(l);
+                    lines.push_back(Line(i, mj, get_h(i, mj)));
                 }
+        }
+
+        // 山登り。
+        {
+            for (int step=0; step<8096; step++)
+            {
+                int r0 = xor64()%(N2/2);
+                int r1 = xor64()%(N2/2);
+                if (r0==r1)
+                    continue;
+
+                int t0 = xor64()%2;
+                int t1 = xor64()%2;
+                swap(
+                    t0==0 ? lines[r0].a0 : lines[r0].a1,
+                    10==0 ? lines[r1].a0 : lines[r1].a1);
+
+                int h02 = get_h(lines[r0].a0, lines[r0].a1);
+                int h12 = get_h(lines[r1].a0, lines[r1].a1);
+
+                if (h02+h12 < lines[r0].h+lines[r1].h)
+                {
+                    lines[r0].h = h02;
+                    lines[r1].h = h12;
+                }
+                else
+                    swap(
+                        t0==0 ? lines[r0].a0 : lines[r0].a1,
+                        10==0 ? lines[r1].a0 : lines[r1].a1);
+            }
+
+            for (Line &line: lines)
+                if (A[line.a0]>A[line.a1])
+                    swap(line.a0, line.a1);
         }
 
         sort(lines.begin(), lines.end(), [&](const Line &l0, const Line &l1) {return l0.h<l1.h;});
